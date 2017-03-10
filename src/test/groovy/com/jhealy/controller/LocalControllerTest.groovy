@@ -4,7 +4,10 @@ import com.jhealy.spring.CustomException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.embedded.LocalServerPort
 import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.RestTemplate
 import spock.lang.Unroll
 
@@ -20,8 +23,7 @@ class LocalControllerTest extends BaseIntegrationTest {
   @Autowired
   private RestTemplate restTemplate;
 
-  @LocalServerPort
-      port
+  @LocalServerPort port
 
   def "hello world"() {
 
@@ -54,37 +56,45 @@ class LocalControllerTest extends BaseIntegrationTest {
   }
 
   @Unroll
-  def "controller third party call - respond with integer status code only - ClientException"() {
+  def "controller third party call - third party throws Client Side Exception, turns into HttpServerErrorException"() {
 
     when:
     this.restTemplate.exchange(URI.create("http://localhost:${port}/local/thirdparty"), GET, null, String.class)
 
     then:
-    Exception e = thrown(Exception)
-    println e
-    1 * this.mockServletHandler.call(GET, "/thirdpartyrequestpath", _ as HttpServletRequest) >> responseStatus
-
-    where:
-    responseStatus | _
-    404            | _
-    500            | _
+    def e = thrown(HttpServerErrorException)
+    e.statusCode == HttpStatus.INTERNAL_SERVER_ERROR
+    1 * this.mockServletHandler.call(GET, "/thirdpartyrequestpath", _ as HttpServletRequest) >> 404
   }
 
   @Unroll
-  def "controller third party call throws exception"() {
-
-    String exceptionMessage = "This is my exception being thrown"
+  def "controller third party call - third party throws HttpServerErrorException"() {
 
     when:
     this.restTemplate.exchange(URI.create("http://localhost:${port}/local/thirdparty"), GET, null, String.class)
 
     then:
-    CustomException e = thrown(CustomException)
-    e.getStatus() == 404
-    e.message == exceptionMessage
-    1 * this.mockServletHandler.call(GET, "/thirdpartyrequestpath", _ as HttpServletRequest) >> {
-      throw new CustomException(exceptionMessage, 404)
-    }
+    def e = thrown(HttpServerErrorException)
+    e.statusCode == HttpStatus.INTERNAL_SERVER_ERROR
+    1 * this.mockServletHandler.call(GET, "/thirdpartyrequestpath", _ as HttpServletRequest) >> 500
   }
+
+
+//  @Unroll
+//  def "controller third party call throws exception"() {
+//
+//    String exceptionMessage = "This is my exception being thrown"
+//
+//    when:
+//    this.restTemplate.exchange(URI.create("http://localhost:${port}/local/thirdparty"), GET, null, String.class)
+//
+//    then:
+//    CustomException e = thrown(CustomException)
+//    e.getStatus() == 404
+//    e.message == exceptionMessage
+//    1 * this.mockServletHandler.call(GET, "/thirdpartyrequestpath", _ as HttpServletRequest) >> {
+//      throw new CustomException(exceptionMessage, 404)
+//    }
+//  }
 
 }

@@ -14,24 +14,24 @@ import java.net.URI;
 @Controller
 public class LocalController {
 
-    @Autowired
-    RestTemplate restTemplate;
+  @Autowired
+  RestTemplate restTemplate;
 
-    @Value("${thirdParty.baseUri}")
-    public String thirdPartyBaseUri;
+  @Value("${thirdParty.baseUri}")
+  public String thirdPartyBaseUri;
 
-    @RequestMapping("/local/helloworld")
-    @ResponseBody
-    String home() {
-        return "hello world";
-    }
+  @RequestMapping("/local/helloworld")
+  @ResponseBody
+  String home() {
+    return "hello world";
+  }
 
-    @RequestMapping("/local/thirdparty")
-    @ResponseBody
-    String thirdParty() {
+  @RequestMapping("/local/thirdparty")
+  @ResponseBody
+  String thirdParty() {
 
-        ResponseEntity<String> exchange = restTemplate.exchange(URI.create(thirdPartyBaseUri + "/thirdpartyrequestpath"), HttpMethod.GET, null, String.class);
+    ResponseEntity<String> exchange = restTemplate.exchange(URI.create(thirdPartyBaseUri + "/thirdpartyrequestpath"), HttpMethod.GET, null, String.class);
 
-        return exchange.getBody();
-    }
+    return exchange.getBody();
+  }
 }
